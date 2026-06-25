@@ -110,25 +110,41 @@ public class App {
     }
     
     static <K> Produto localizarProduto(ABB<K, Produto> produtosCadastrados, K procurado) {
-    	
-    	// TODO
-    	return null;
+        if (produtosCadastrados == null || procurado == null) {
+            return null;
+        }
+
+        try {
+            return produtosCadastrados.pesquisar(procurado);
+        } catch (NoSuchElementException excecao) {
+            return null;
+        }
     }
     
     /** Localiza um produto na árvore de produtos organizados por id, a partir do código de produto informado pelo usuário, e o retorna. 
      *  Em caso de não encontrar o produto, retorna null */
     static Produto localizarProdutoID(ABB<Integer, Produto> produtosCadastrados) {
-        
-        //TODO
-    	return null;
+        System.out.println("Digite o código do produto: ");
+
+        try {
+            int codigo = Integer.parseInt(teclado.nextLine());
+            return localizarProduto(produtosCadastrados, codigo);
+        } catch (NumberFormatException excecao) {
+            return null;
+        }
     }
     
     /** Localiza um produto na árvore de produtos organizados por nome, a partir do nome de produto informado pelo usuário, e o retorna. 
      *  A busca não é sensível ao caso. Em caso de não encontrar o produto, retorna null */
     static Produto localizarProdutoNome(ABB<String, Produto> produtosCadastrados) {
-        
-    	//TODO
-    	return null;
+        System.out.println("Digite o nome do produto: ");
+
+        String nome = teclado.nextLine();
+        if (nome == null) {
+            return null;
+        }
+
+        return localizarProduto(produtosCadastrados, nome.trim().toLowerCase());
     }
     
     private static void mostrarProduto(Produto produto) {
@@ -154,38 +170,91 @@ public class App {
     /** Localiza e remove um produto da árvore de produtos organizados por id, a partir do código de produto informado pelo usuário, e o retorna. 
      *  Em caso de não encontrar o produto, retorna null */
     static Produto removerProdutoId(ABB<Integer, Produto> produtosCadastrados) {
-    	//TODO
-    	return null;
+        System.out.println("Digite o código do produto a ser removido: ");
+
+        try {
+            int codigo = Integer.parseInt(teclado.nextLine());
+            return removerProduto(produtosCadastrados, codigo);
+        } catch (NumberFormatException excecao) {
+            return null;
+        }
     }
 
      /** Localiza e remove um produto na árvore de produtos organizados por nome, a partir do nome de produto informado pelo usuário, e o retorna. 
       *  A busca não é sensível ao caso. Em caso de não encontrar o produto, retorna null */
     static Produto removerProdutoNome(ABB<String, Produto> produtosCadastrados) {
-    	//TODO
-    	return null;
+        System.out.println("Digite o nome do produto a ser removido: ");
+
+        String nome = teclado.nextLine();
+        if (nome == null) {
+            return null;
+        }
+
+        return removerProduto(produtosCadastrados, nome.trim().toLowerCase());
     }
 
     static <K> Produto removerProduto(ABB<K, Produto> produtosCadastrados, K chave){
-    	//TODO
-    	return null;
+        if (produtosCadastrados == null || chave == null) {
+            return null;
+        }
+
+        try {
+            return produtosCadastrados.remover(chave);
+        } catch (NoSuchElementException excecao) {
+            return null;
+        }
     }
     
     private static <K> void recortarProduto(ABB<K, Produto> produtosCadastrados, K deOnde, K ateOnde) {
-    	//TODO
+        if (produtosCadastrados == null || deOnde == null || ateOnde == null) {
+            return;
+        }
+
+        cabecalho();
+        System.out.println("PRODUTOS NO INTERVALO:");
+
+        Lista<Produto> produtosRecortados = produtosCadastrados.recortar(deOnde, ateOnde);
+        if (produtosRecortados == null || produtosRecortados.vazia()) {
+            System.out.println("Nenhum produto encontrado no intervalo.");
+            return;
+        }
+
+        System.out.println(produtosRecortados.toString());
     }
     
     private static void recortarProdutosNome(ABB<String, Produto> produtosCadastrados) {
-    	//TODO
+        System.out.println("Digite o nome inicial do intervalo: ");
+        String inicio = teclado.nextLine();
+
+        System.out.println("Digite o nome final do intervalo: ");
+        String fim = teclado.nextLine();
+
+        if (inicio == null || fim == null) {
+            return;
+        }
+
+        recortarProduto(produtosCadastrados, inicio.trim().toLowerCase(), fim.trim().toLowerCase());
     }
      
     private static void recortarProdutosId(ABB<Integer, Produto> produtosCadastrados) {
-    	//TODO
+        System.out.println("Digite o ID inicial do intervalo: ");
+
+        try {
+            int inicio = Integer.parseInt(teclado.nextLine());
+
+            System.out.println("Digite o ID final do intervalo: ");
+            int fim = Integer.parseInt(teclado.nextLine());
+
+            recortarProduto(produtosCadastrados, inicio, fim);
+        } catch (NumberFormatException excecao) {
+            System.out.println("Valores de ID inválidos.");
+        }
     }
     
     public static void main(String[] args) {
 		teclado = new Scanner(System.in, Charset.forName("UTF-8"));
         nomeArquivoDados = "produtos.txt";
-        produtosCadastradosPorNome = lerProdutos(nomeArquivoDados, (p -> p.descricao));
+        produtosCadastradosPorNome = lerProdutos(nomeArquivoDados, (p -> p.descricao.toLowerCase()));
         produtosCadastradosPorId = new ABB<Integer, Produto>(produtosCadastradosPorNome, (p -> p.idProduto));
         
         int opcao = -1;
