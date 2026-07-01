@@ -81,6 +81,14 @@ public class Lista<E> implements IMedicao {
 		this.tamanho++;
 	}
 
+	public void inserirFinal(E novo) {
+        Celula<E> novaCelula = new Celula<>(novo);
+        this.ultimo.setProximo(novaCelula);
+        this.ultimo = novaCelula;
+
+        this.tamanho++;
+    }
+
 	/**
 	 * Remove o último elemento da lista.
 	 * 
@@ -368,6 +376,7 @@ public class Lista<E> implements IMedicao {
 	public int tamanho() {
 		return tamanho;
 	}
+	
 
 	/**
 	 * Retorna uma string com informação detalhada de cada elemento da lista.
@@ -412,4 +421,175 @@ public class Lista<E> implements IMedicao {
     public void setPrimeiro(Celula<E> primeiro) {
         this.primeiro = primeiro;
     }
+
+	/*
+	 * Inverte a ordem dos elementos na lista utilizando a técnica de referência.
+	 */
+	public void inverterViaReferencial() {
+        // Se a lista estiver vazia ou tiver só 1 elemento, não há o que inverter.
+        if (this.tamanho <= 1) {
+            return; 
+        }
+
+		LocalDateTime inicio = LocalDateTime.now();
+		operacoes = 0;
+
+        Celula<E> anterior = null;
+        Celula<E> atual = this.primeiro.getProximo(); 
+        Celula<E> proximo = null;
+
+        this.ultimo = atual; 
+
+        while (atual != null) {
+            proximo = atual.getProximo(); // Salva o resto da lista para não perder a referência
+            atual.setProximo(anterior);   // Inverte o ponteiro do nó atual para trás
+            
+            anterior = atual; 
+            atual = proximo;
+			operacoes += 3;
+        }
+
+		LocalDateTime fim = LocalDateTime.now();
+		tempo = Duration.between(inicio, fim).toNanos();
+
+       
+        this.primeiro.setProximo(anterior);
+    }
+
+	/*
+	 * Substitui todas as ocorrências de um elemento por outro
+	 * @param antigo O elemento a ser substituído.
+	 * @param novo O novo elemento.
+	 * @return true se algum elemento foi substituído, false caso contrário.
+	 */
+	public boolean substituir(E antigo, E novo) {
+		// LocalDateTime inicio = LocalDateTime.now();
+		// operacoes = 0;
+		boolean substituiu = false;
+
+		if (this.vazia()) {
+			throw new IllegalStateException("A lista está vazia!");
+		}
+		
+		if (antigo == null || novo == null) {
+			throw new IllegalArgumentException("Os elementos não podem ser nulos!");
+		}
+
+		if (antigo.equals(novo)) {
+			// LocalDateTime fim = LocalDateTime.now();
+			// tempo = Duration.between(inicio, fim).toNanos();
+			return false; 
+		}
+
+		Celula<E> aux = this.primeiro.getProximo();
+		
+		while (aux != null) {
+			operacoes++;
+			if (aux.getItem().equals(antigo)){
+				aux.setItem(novo);
+				substituiu = true;
+				break; 
+			}
+			aux = aux.getProximo();
+		}
+
+		// LocalDateTime fim = LocalDateTime.now();
+		// tempo = Duration.between(inicio, fim).toNanos();
+		
+		return substituiu;
+	}
+
+	/*
+	 * Retorna o elemento na posição indicada, sem removê-lo da lista.
+	 * @param posicao A posição do elemento a ser obtido.
+	 * @return O elemento na posição indicada.
+	 */
+	public E obter(int posicao){
+		if (this.vazia()){
+			throw new IllegalStateException("A lista está vazia!");
+		}
+
+        if ((posicao < 0) || (posicao >= this.tamanho)){
+            throw new IndexOutOfBoundsException("Posição inválida");
+        }
+
+		// LocalDateTime inicio = LocalDateTime.now();
+		// operacoes = 0;
+
+        Celula<E> atual = this.primeiro.getProximo();
+
+        for (int i = 0; i < posicao; i++){
+			// operacoes++;
+            atual = atual.getProximo();
+        }
+
+		// LocalDateTime fim = LocalDateTime.now();
+		// tempo = Duration.between(inicio, fim).toNanos();
+        return atual.getItem();
+    }
+
+	public boolean contem(E elemento) {
+		Celula<E> aux = this.primeiro.getProximo();
+		while (aux != null) {
+			if (aux.getItem().equals(elemento)) {
+				return true;
+			}
+			aux = aux.getProximo();
+		}
+		return false;
+	}
+
+	public int frequencia(E elemento) {
+		int cont = 0;
+		Celula<E> aux = this.primeiro.getProximo();
+		while (aux != null) {
+			if (aux.getItem().equals(elemento)) {
+				cont++;
+			}
+			aux = aux.getProximo();
+		}
+		return cont;
+	}
+
+	public void limpar() {
+		this.primeiro.setProximo(null);
+		this.ultimo = this.primeiro;
+		this.tamanho = 0;
+	}
+
+	public Lista<E> copiar() {
+		Lista<E> copia = new Lista<>();
+		Celula<E> aux = this.primeiro.getProximo();
+		while (aux != null) {
+			copia.inserirFinal(aux.getItem());
+			aux = aux.getProximo();
+		}
+		return copia;
+	}
+
+	public void concatenar(Lista<E> outra) {
+		if (outra == null || outra.vazia()) return;
+		Celula<E> aux = outra.getPrimeiro().getProximo();
+		while (aux != null) {
+			this.inserirFinal(aux.getItem());
+			aux = aux.getProximo();
+		}
+	}
+
+	// Teste
+	public static void main(String[] args) {
+		Lista<Integer> lista = new Lista<>();
+		lista.inserir(1);
+		lista.inserir(2);
+		lista.inserir(3);
+		lista.inserir(4);
+		lista.inserir(5);
+
+		System.out.println("Lista original: " + lista);
+
+		lista.inverterViaReferencial();
+
+		System.out.println("Lista invertida: " + lista);
+	}
+
 }

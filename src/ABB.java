@@ -315,6 +315,96 @@ public class ABB<K, V> implements IMapeamento<K, V> {
         raizSubArvore.setEsquerda(remover(raizSubArvore.getEsquerda(), raizSubArvore.getChave()));
     }
 
+    public int altura() {
+        return alturaRecursiva(raiz);
+    }
+
+    private int alturaRecursiva(No<K, V> no) {
+        if (no == null) return -1;
+        return 1 + Math.max(alturaRecursiva(no.getEsquerda()), alturaRecursiva(no.getDireita()));
+    }
+
+    public int contarNos() {
+        return contarNosRecursivo(raiz);
+    }
+
+    private int contarNosRecursivo(No<K, V> no) {
+        if (no == null) return 0;
+        return 1 + contarNosRecursivo(no.getEsquerda()) + contarNosRecursivo(no.getDireita());
+    }
+
+    public V obterMenorValor() {
+        if (vazia()) throw new IllegalStateException("A árvore está vazia!");
+        No<K, V> atual = raiz;
+        while (atual.getEsquerda() != null) {
+            atual = atual.getEsquerda();
+        }
+        return atual.getItem();
+    }
+
+    public V obterMaiorValor() {
+        if (vazia()) throw new IllegalStateException("A árvore está vazia!");
+        No<K, V> atual = raiz;
+        while (atual.getDireita() != null) {
+            atual = atual.getDireita();
+        }
+        return atual.getItem();
+    }
+
+    public int nivel(K chave) {
+        return nivelRecursivo(raiz, chave, 0);
+    }
+
+    private int nivelRecursivo(No<K, V> no, K chave, int nivelAtual) {
+        if (no == null) return -1;
+        int comp = comparador.compare(chave, no.getChave());
+        if (comp == 0) return nivelAtual;
+        else if (comp < 0) return nivelRecursivo(no.getEsquerda(), chave, nivelAtual + 1);
+        else return nivelRecursivo(no.getDireita(), chave, nivelAtual + 1);
+    }
+
+    public boolean ehFolha(K chave) {
+        No<K, V> no = pesquisarNo(raiz, chave);
+        if (no == null) throw new NoSuchElementException("Chave não encontrada na árvore.");
+        return no.getEsquerda() == null && no.getDireita() == null;
+    }
+
+    private No<K, V> pesquisarNo(No<K, V> no, K chave) {
+        if (no == null) return null;
+        int comp = comparador.compare(chave, no.getChave());
+        if (comp == 0) return no;
+        else if (comp < 0) return pesquisarNo(no.getEsquerda(), chave);
+        else return pesquisarNo(no.getDireita(), chave);
+    }
+
+    public String preOrdem() {
+        return caminhamentoPreOrdem(raiz);
+    }
+
+    private String caminhamentoPreOrdem(No<K, V> no) {
+        if (no == null) return "";
+        String resp = no.getItem() + "\n";
+        resp += caminhamentoPreOrdem(no.getEsquerda());
+        resp += caminhamentoPreOrdem(no.getDireita());
+        return resp;
+    }
+
+    public String emOrdem() {
+        return caminhamentoEmOrdem(raiz);
+    }
+
+    public String posOrdem() {
+        return caminhamentoPosOrdem(raiz);
+    }
+
+    private String caminhamentoPosOrdem(No<K, V> no) {
+        if (no == null) return "";
+        String resp = caminhamentoPosOrdem(no.getEsquerda());
+        resp += caminhamentoPosOrdem(no.getDireita());
+        resp += no.getItem() + "\n";
+        return resp;
+    }
+
     @Override
     public int tamanho() {
         return tamanho;

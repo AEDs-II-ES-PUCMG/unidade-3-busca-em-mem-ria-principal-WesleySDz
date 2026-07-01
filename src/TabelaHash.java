@@ -218,6 +218,101 @@ public class TabelaHash<K, V> implements IMapeamento<K, V> {
 		return conteudo.toString();
 	}
 
+	public boolean vazia() {
+		return tamanho() == 0;
+	}
+
+	public boolean contemValor(V valor){
+		LocalDateTime inicio = LocalDateTime.now();
+		comparacoes = 1;
+		for (int i = 0; i < capacidade; i++) {
+			Lista<Entrada<K, V>> lista = tabelaHash[i];
+			for (int j = 0; j < lista.tamanho(); j++){
+				Entrada<K, V> entrada = lista.obter(j);
+				if (entrada.getValor().equals(valor)){
+					comparacoes++;
+					LocalDateTime fim = LocalDateTime.now();
+					tempoExecucao = Duration.between(inicio, fim).toNanos();
+					return true;
+				}
+			}
+		}
+		
+		LocalDateTime fim = LocalDateTime.now();
+		tempoExecucao = Duration.between(inicio, fim).toNanos();
+		return false;
+	}
+
+	public Lista<K> obterTodasChaves() {
+		Lista<K> todasChaves = new Lista<>();
+		LocalDateTime inicio = LocalDateTime.now();
+
+		comparacoes = 1;
+
+		for (int i = 0; i < capacidade; i++) {
+			Lista<Entrada<K, V>> lista = tabelaHash[i];
+
+			for (int j = 0; j < lista.tamanho(); j++) {
+				Entrada<K, V> entrada = lista.obter(j);
+				comparacoes++;
+				todasChaves.inserirFinal(entrada.getChave());
+			}
+		}
+
+		LocalDateTime fim = LocalDateTime.now();
+		tempoExecucao = Duration.between(inicio, fim).toNanos();
+		return todasChaves;
+	}
+
+	public void substituir(K chave, V novoValor) {
+		int posicao = funcaoHash(chave);
+		
+		Entrada<K, V> procurado = new Entrada<>(chave, null);
+		
+		procurado = tabelaHash[posicao].pesquisar(procurado);
+		
+		procurado.setValor(novoValor);
+	}
+
+	public void limpar() {
+		for (int i = 0; i < this.capacidade; i++) {
+			this.tabelaHash[i] = new Lista<>();
+		}
+	}
+
+	public Lista<V> obterTodosValores() {
+		Lista<V> todosValores = new Lista<>();
+		LocalDateTime inicio = LocalDateTime.now();
+		comparacoes = 1;
+
+		for (int i = 0; i < capacidade; i++) {
+			Lista<Entrada<K, V>> lista = tabelaHash[i];
+			for (int j = 0; j < lista.tamanho(); j++) {
+				Entrada<K, V> entrada = lista.obter(j);
+				comparacoes++;
+				todosValores.inserirFinal(entrada.getValor());
+			}
+		}
+
+		LocalDateTime fim = LocalDateTime.now();
+		tempoExecucao = Duration.between(inicio, fim).toNanos();
+		return todosValores;
+	}
+
+	public double fatorCarga() {
+		return (double) tamanho() / capacidade;
+	}
+
+	public int quantidadeColisoes() {
+		int colisoes = 0;
+		for (int i = 0; i < capacidade; i++) {
+			if (tabelaHash[i].tamanho() > 1) {
+				colisoes += (tabelaHash[i].tamanho() - 1);
+			}
+		}
+		return colisoes;
+	}
+
 	// #region IMedicao
 	@Override
 	public long getComparacoes() {

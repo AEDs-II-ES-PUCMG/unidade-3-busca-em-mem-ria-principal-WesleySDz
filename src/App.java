@@ -81,6 +81,7 @@ public class App {
         System.out.println("1 - Procurar produtos, por id");
         System.out.println("2 - Recortar produtos, por descrição");
         System.out.println("3 - Pedidos de um produto, em arquivo");
+        System.out.println("4 - Listar todos os produtos (por nome)");
         System.out.println("0 - Sair");
         return lerOpcao("Digite sua opção: ", Integer.class);
     }
@@ -137,7 +138,7 @@ public class App {
     static Produto localizarProdutoID() {
         cabecalho();
         System.out.println("LOCALIZANDO POR ID");
-        int ID = lerOpcao("Digite o ID para busca", Integer.class);
+        int ID = lerOpcao("Digite o ID para busca: ", Integer.class);
         Produto localizado = localizarProduto(produtosPorId, ID);
         mostrarProduto(localizado);
         return localizado;
@@ -237,6 +238,16 @@ public class App {
         }
     }
 
+    static void listarProdutos() {
+        cabecalho();
+        System.out.println("LISTAGEM DE TODOS OS PRODUTOS");
+        if (produtosPorNome != null && !produtosPorNome.vazia()) {
+            System.out.println(produtosPorNome.percorrer());
+        } else {
+            System.out.println("Nenhum produto cadastrado na base de dados.");
+        }
+    }
+
     public static void main(String[] args) {
         teclado = new Scanner(System.in, Charset.forName("UTF-8"));
         nomeArquivoDados = "produtos.txt";
@@ -260,6 +271,7 @@ public class App {
                 case 1 -> localizarProdutoID();
                 case 2 -> recortarArvore(produtosPorNome);
                 case 3 -> pedidosDoProduto();
+                case 4 -> listarProdutos();
             }
             pausa();
         } while (opcao != 0);

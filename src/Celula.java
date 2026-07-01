@@ -1,6 +1,6 @@
 public class Celula<T> {
 
-	private final T item;
+	private T item;
 	private Celula<T> proximo;
 
 	@SuppressWarnings("OverridableMethodCallInConstructor")
@@ -24,6 +24,10 @@ public class Celula<T> {
 		return item;
 	}
 
+	public void setItem(T item) {
+		this.item = item;
+	}
+
 	public Celula<T> getProximo() {
 		return proximo;
 	}
@@ -31,4 +35,5 @@ public class Celula<T> {
 	public void setProximo(Celula<T> proximo) {
 		this.proximo = proximo;
 	}
+
 }
