@@ -385,14 +385,10 @@ public class Lista<E> implements IMedicao {
 			int contador = 0;
 			aux = primeiro.getProximo();
 			while (aux != null) {
-				aux = this.primeiro.getProximo();
-				// listaString.append("de "+ aux.getItem().getClass().getName());
-				while (aux != null) {
-					listaString.append("\n").append(contador).append(" - ");
-					listaString.append(aux.getItem());
-					aux = aux.getProximo();
-					contador++;
-				}
+				listaString.append("\n").append(contador).append(" - ");
+				listaString.append(aux.getItem());
+				aux = aux.getProximo();
+				contador++;
 			}
 			listaString.append("\n");
 		}

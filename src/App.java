@@ -3,6 +3,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.function.Function;
@@ -24,7 +25,9 @@ public class App {
     static ABB<String, Produto> produtosPorNome;
     static TabelaHash<Produto, Lista<Pedido>> pedidosPorProduto;
 
-    /** Limpa o buffer do console, simulando uma limpeza de tela num terminal vt-100 */
+    /**
+     * Limpa o buffer do console, simulando uma limpeza de tela num terminal vt-100
+     */
     static void limparTela() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
@@ -45,21 +48,23 @@ public class App {
 
     /**
      * Método genérico para ler dados numéricos do teclado
-     * @param <T> A classe de retorno (tipicamente int ou double)
+     * 
+     * @param <T>      A classe de retorno (tipicamente int ou double)
      * @param mensagem Mensagem a ser exibida na leitura
-     * @param classe Classe do tipo T para uso na reflaxão Java
+     * @param classe   Classe do tipo T para uso na reflaxão Java
      * @return Um valor numérico da classe desejada
      */
     static <T extends Number> T lerOpcao(String mensagem, Class<T> classe) {
-
-        T valor;
-
-        System.out.println(mensagem);
-        try {
-            valor = classe.getConstructor(String.class).newInstance(teclado.nextLine());
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-            return null;
+        T valor = null;
+        while (valor == null) {
+            System.out.print(mensagem);
+            try {
+                String input = teclado.nextLine();
+                valor = classe.getConstructor(String.class).newInstance(input);
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                System.out.println("Opção inválida. Tente novamente.");
+            }
         }
         return valor;
     }
@@ -77,8 +82,7 @@ public class App {
         System.out.println("2 - Recortar produtos, por descrição");
         System.out.println("3 - Pedidos de um produto, em arquivo");
         System.out.println("0 - Sair");
-        System.out.print("Digite sua opção: ");
-        return Integer.parseInt(teclado.nextLine());
+        return lerOpcao("Digite sua opção: ", Integer.class);
     }
 
     /**
@@ -141,9 +145,14 @@ public class App {
 
     static <K> Produto localizarProduto(ABB<K, Produto> produtosCadastrados, K chave) {
         cabecalho();
-        Produto localizado = produtosCadastrados.pesquisar(chave);
-        System.out.println("Tempo: " + produtosCadastrados.getTempo());
-        System.out.println("Comparações: " + produtosCadastrados.getComparacoes());
+        Produto localizado = null;
+        try {
+            localizado = produtosCadastrados.pesquisar(chave);
+            System.out.println("Tempo: " + produtosCadastrados.getTempo());
+            System.out.println("Comparações: " + produtosCadastrados.getComparacoes());
+        } catch (NoSuchElementException e) {
+            System.out.println("Produto não encontrado.");
+        }
         pausa();
         return localizado;
     }
@@ -169,9 +178,13 @@ public class App {
             quantProdutos = sorteio.nextInt(8) + 1;
             for (int j = 0; j < quantProdutos; j++) {
                 int id = sorteio.nextInt(7750) + 10_000;
-                Produto prod = produtosPorId.pesquisar(id);
-                ped.incluirProduto(prod);
-                inserirNaTabela(prod, ped);
+                try {
+                    Produto prod = produtosPorId.pesquisar(id);
+                    ped.incluirProduto(prod);
+                    inserirNaTabela(prod, ped);
+                } catch (NoSuchElementException e) {
+                    // Ignora ID inexistente gerado pelo sorteio
+                }
             }
             pedidos.inserir(ped);
         }
@@ -179,7 +192,14 @@ public class App {
     }
 
     private static void inserirNaTabela(Produto produto, Pedido pedido) {
-        // TODO
+        Lista<Pedido> listaDePedidos;
+        try {
+            listaDePedidos = pedidosPorProduto.pesquisar(produto);
+        } catch (NoSuchElementException e) {
+            listaDePedidos = new Lista<>();
+            pedidosPorProduto.inserir(produto, listaDePedidos);
+        }
+        listaDePedidos.inserir(pedido);
     }
 
     private static void recortarArvore(ABB<String, Produto> arvore) {
@@ -193,16 +213,27 @@ public class App {
         System.out.println(arvore.recortar(descIni, descFim));
     }
 
-    static void pedidosDoProduto(){
+    static void pedidosDoProduto() {
         Produto produto = localizarProdutoID();
-        String nomeArquivo = "RelatorioProduto"+produto.hashCode()+".txt";    
-        try (FileWriter arquivoRelatorio = new FileWriter(nomeArquivo)){
-            Lista<Pedido> listaProd = pedidosPorProduto.pesquisar(produto);
-            arquivoRelatorio.append(listaProd+"\n");
-            arquivoRelatorio.close();
-            System.out.println("Dados salvos em "+nomeArquivo);
+        if (produto == null) {
+            System.out.println("Produto não localizado. Operação cancelada.");
+            return;
+        }
+
+        Lista<Pedido> listaProd;
+        try {
+            listaProd = pedidosPorProduto.pesquisar(produto);
+        } catch (NoSuchElementException e) {
+            System.out.println("Não há pedidos registrados para o produto selecionado.");
+            return;
+        }
+
+        String nomeArquivo = "RelatorioProduto" + produto.hashCode() + ".txt";
+        try (FileWriter arquivoRelatorio = new FileWriter(nomeArquivo)) {
+            arquivoRelatorio.append(listaProd + "\n");
+            System.out.println("Dados salvos em " + nomeArquivo);
         } catch (IOException e) {
-            System.out.println("Problemas para criar o arquivo "+nomeArquivo+". Tente novamente");
+            System.out.println("Problemas para criar o arquivo " + nomeArquivo + ". Tente novamente");
         }
     }
 
@@ -210,6 +241,13 @@ public class App {
         teclado = new Scanner(System.in, Charset.forName("UTF-8"));
         nomeArquivoDados = "produtos.txt";
         produtosPorId = lerProdutos(nomeArquivoDados, Produto::hashCode);
+        
+        if (produtosPorId == null || produtosPorId.vazia()) {
+            System.out.println("Problema ao ler o arquivo " + nomeArquivoDados + ". Aplicação encerrada.");
+            teclado.close();
+            return;
+        }
+
         produtosPorNome = new AVL<>(produtosPorId, prod -> prod.descricao, String::compareTo);
         pedidosPorProduto = new TabelaHash<>((int) (quantosProdutos * 1.25));
         gerarPedidos(25000);
