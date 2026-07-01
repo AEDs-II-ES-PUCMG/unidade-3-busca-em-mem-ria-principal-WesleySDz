@@ -179,7 +179,7 @@ public class ABB<K, V> implements IMapeamento<K, V> {
         return tamanho;
     }
 
-    private No<K, V> inserir(No<K, V> raizArvore, K chave, V item) {
+    protected No<K, V> inserir(No<K, V> raizArvore, K chave, V item) {
 
         int comparacao;
 
