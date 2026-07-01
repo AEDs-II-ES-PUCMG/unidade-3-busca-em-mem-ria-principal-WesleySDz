@@ -1,4 +1,5 @@
 import java.util.Comparator;
+import java.util.function.Function;
 
 public class AVL<K, V> extends ABB<K, V> {
 
@@ -14,6 +15,10 @@ public class AVL<K, V> extends ABB<K, V> {
     	super(comparador);
     }
     
+	 public AVL(ABB<?,V> original, Function<V,K> funcaoChave, Comparator<K> comparador) {
+			super(original, funcaoChave, comparador);
+	 }
+
     /**
     * Método recursivo responsável por adicionar um item à árvore.
     * @param raizArvore: raiz da árvore ou sub-árvore em que o item será adicionado.
@@ -38,11 +43,11 @@ public class AVL<K, V> extends ABB<K, V> {
     * @param raizArvore: raiz da árvore ou sub-árvore em que o antecessor do nó que deverá ser retirado deverá ser localizado.
     * @return a raiz atualizada da árvore ou sub-árvore balanceada AVL após a remoção do antecessor do nó que foi retirado da árvore.
     */
-    @Override
-    protected No<K, V> removerNoAntecessor(No<K, V> itemRetirar, No<K, V> raizArvore) {
+    // @Override
+    // protected No<K, V> removerNoAntecessor(No<K, V> itemRetirar, No<K, V> raizArvore) {
     	
-        return balancear(super.removerNoAntecessor(itemRetirar, raizArvore));
-    }
+    //     return balancear(super.removerNoAntecessor(itemRetirar, raizArvore));
+    // }
 
     /**
     * Método recursivo responsável por localizar um item na árvore e retirá-lo da árvore.
