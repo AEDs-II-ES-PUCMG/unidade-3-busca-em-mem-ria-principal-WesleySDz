@@ -4,3 +4,5 @@ Oficinas e atividade pontuada realizada em AEDs II, tendo em vista estruturas de
 ## Aluno 
 
 * Wesley Sousa Domingos
+* Gabriel Santos Martins
+* Luca Moreira Ribeiro Mazala de Araujo

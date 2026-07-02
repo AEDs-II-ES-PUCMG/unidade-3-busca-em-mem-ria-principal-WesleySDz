@@ -1,319 +1,191 @@
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
+import java.util.function.BiConsumer;
 
 public class TabelaHash<K, V> implements IMapeamento<K, V> {
 
-	private Lista<Entrada<K, V>>[] tabelaHash; /// tabela que referenciará todas as listas lineares encadeadas.
-	/// Nesse caso, estamos utilizando uma tabela hash com endereçamento em
-	/// separado,
-	/// ou seja, os itens são armazenados em listas lineares encadeadas.
+	public Lista<Entrada<K, V>>[] tabelaHash; /// tabela que referenciará todas as listas lineares encadeadas.
+								      /// Nesse caso, estamos utilizando uma tabela hash com endereçamento em separado,
+								      /// ou seja, os itens são armazenados em listas lineares encadeadas.
 
 	private int capacidade; /// tamanho da tabela hash.
-							/// deve ser um número primo grande para diminuirmos a probabilidade de
-							/// colisões.
+	                        /// deve ser um número primo grande para diminuirmos a probabilidade de colisões.
 
-	private int comparacoes; // contador de operacoes para busca/insercao
-	private double tempoExecucao; // marcação de tempo para busca/insercao
-
+	private int comparacoes;		// contador de operacoes para busca
+	private long inicio;
+	private long termino;
+	
 	/**
 	 * Construtor da classe.
-	 * Esse método é responsável por inicializar a tabela hash que trabalha com
-	 * endereçamento em separado.
-	 * Assim, esse método atribui, ao atributo "capacidade", dessa classe, o valor
-	 * passado por meio do parâmetro "capacidade".
-	 * Esse método também cria um vetor, de tamanho "capacidade", de listas
-	 * lineares; e o atribui ao atributo "tabelaHash".
-	 * Adicionalmente, cada posição do vetor é inicializada com uma lista encadeada
-	 * vazia.
-	 * 
-	 * @param capacidade: quantidade de posições da tabela hash. Cada posição é uma
-	 *                    lista encadeada.
-	 * @throws IllegalArgumentException caso a capacidade seja um número não
-	 *                                  positivo.
+	 * Esse método é responsável por inicializar a tabela hash que trabalha com endereçamento em separado.
+	 * Assim, esse método atribui, ao atributo "capacidade", dessa classe, o valor passado por meio do parâmetro "capacidade".
+	 * Esse método também cria um vetor, de tamanho "capacidade", de listas lineares; e o atribui ao atributo "tabelaHash".
+	 * Adicionalmente, cada posição do vetor é inicializada com uma lista encadeada vazia.
+	 * @param capacidade: quantidade de posições da tabela hash. Cada posição é uma lista encadeada. 
+	 * @throws IllegalArgumentException caso a capacidade seja um número não positivo.
 	 */
 	@SuppressWarnings("unchecked")
 	public TabelaHash(int capacidade) {
-		if (capacidade < 1)
-			throw new IllegalArgumentException("Capacidade não pode ser menor que 1");
+		
+		if (capacidade < 1) {
+			throw new IllegalStateException("A capacidade da tabela hash não pode ser menor do que 1.");
+		}
 		this.capacidade = capacidade;
-		this.tabelaHash = (Lista<Entrada<K, V>>[]) new Lista[this.capacidade];
-
-		for (int i = 0; i < this.capacidade; i++)
-			this.tabelaHash[i] = new Lista<>();
+		tabelaHash = (Lista<Entrada<K, V>>[]) new Lista[capacidade]; 
+		
+		for (int i = 0; i < capacidade; i++)
+			tabelaHash[i] = new Lista<>();
 	}
 
+	public int getCapacidade(){
+		return this.capacidade;
+	}
+	
+	public Lista<Entrada<K, V>>[] getTabela(){
+		return this.tabelaHash;
+	}
+	
 	/**
-	 * Esse método implementa a função de transformação da tabela hash,
+	 *  Esse método implementa a função de transformação da tabela hash, 
 	 * ou seja, calcula a posição, na tabela hash, em que o item,
-	 * que possui a chave informada por meio do parâmetro "chave", deve ser
-	 * encontrado.
-	 * A função de transformação utilizada corresponde ao resto da divisão do
-	 * hashCode de "chave" pelo tamanho da tabela hash.
-	 * 
+	 * que possui a chave informada por meio do parâmetro "chave", deve ser encontrado.
+	 * A função de transformação utilizada corresponde ao resto da divisão do hashCode de "chave" pelo tamanho da tabela hash.
 	 * @param chave: chave da qual desejamos saber a posição na tabela hash.
-	 * @return a posição que o item, cuja chave corresponde a que foi passada como
-	 *         parâmetro para esse método, deve ocupar na tabela hash.
+	 * @return a posição que o item, cuja chave corresponde a que foi passada como parâmetro para esse método, deve ocupar na tabela hash.
 	 */
 	private int funcaoHash(K chave) {
-		return Math.abs(chave.hashCode() % this.capacidade);
+		return Math.abs(chave.hashCode() % capacidade);
 	}
-
+	
 	/**
 	 * Método responsável por inserir um novo item na tabela hash.
-	 * Não é permitido inserir, nessa tabela hash, mais de um item com uma mesma
-	 * chave.
-	 * 
+	 * Não é permitido inserir, nessa tabela hash, mais de um item com uma mesma chave. 
 	 * @param chave: chave do item que deve ser inserido na tabela hash.
-	 * @param item:  referência ao item que deve ser inserido na tabela hash.
+	 * @param item: referência ao item que deve ser inserido na tabela hash.
 	 * @return a posição na tabela hash em que o novo item foi inserido.
-	 * @throws IllegalArgumentException em caso de um item com a mesma chave já
-	 *                                  existir na tabela.
+	 * @throws IllegalArgumentException no caso de um item, com a mesma chave, já existir na tabela.
 	 */
 	@Override
 	public int inserir(K chave, V item) {
-		LocalDateTime inicio = LocalDateTime.now();
-		comparacoes = 1;
-
+		
 		/// cálculo da posição da tabela hash em que o novo item deverá ser armazenado.
 		int posicao = funcaoHash(chave);
-
+		
 		Entrada<K, V> entrada = new Entrada<>(chave, item);
-
-		/// pesquisa o item, passado como parâmetro para esse método, na lista encadeada
-		/// associada à posição, da tabela hash, em que esse novo item deverá ser
-		/// adicionado.
-		/// Se o item não for localizado,
-		/// ele é inserido no final da lista encadeada
-		/// associada à posição, da tabela hash, em que esse novo item será localizado.
+		
+		/// pesquisa o item, passado como parâmetro para esse método, na lista encadeada 
+		/// associada à posição, da tabela hash, em que esse novo item deverá ser adicionado.
+		/// Se o item não for localizado, 
+		/// ele é inserido no final da lista encadeada 
+		/// associada à posição, da tabela hash, em que esse novo item será localizado. 
 		try {
-			this.tabelaHash[posicao].pesquisar(entrada);
-			comparacoes += tabelaHash[posicao].getComparacoes();
-			LocalDateTime fim = LocalDateTime.now();
-			tempoExecucao = Duration.between(inicio, fim).toNanos();
-
+			tabelaHash[posicao].pesquisar(entrada);
 			throw new IllegalArgumentException("O item já havia sido inserido anteriormente na tabela hash!");
 		} catch (NoSuchElementException excecao) {
-			this.tabelaHash[posicao].inserir(entrada);
-			comparacoes += tabelaHash[posicao].getComparacoes();
-			LocalDateTime fim = LocalDateTime.now();
-			tempoExecucao = Duration.between(inicio, fim).toNanos();
+			tabelaHash[posicao].inserir(entrada);
 			return posicao;
+		}
+	}
+	
+	/**
+	 * Método responsável por localizar, na tabela hash, o item
+	 * cuja chave corresponde à que foi passada como parâmetro para esse método. 
+	 * @param chave: chave do item que deve ser localizado na tabela hash.
+	 * @return uma referência ao item encontrado.
+     * @throws NoSuchElementException caso o item não seja localizado na tabela hash.
+	 */
+	@Override
+	public V pesquisar(K chave) {
+		
+		/// cálculo da posição da tabela hash em que o item deve estar armazenado.
+		int posicao = funcaoHash(chave);
+		
+		comparacoes = 1;
+		
+		Entrada<K, V> procurado = new Entrada<>(chave, null);
+		
+		inicio = System.nanoTime();
+		/// pesquisa o item, cuja chave foi passada como parâmetro para esse método,
+		/// na lista encadeada associada à posição, da tabela hash, em que esse item deve estar armazenado.
+		procurado = tabelaHash[posicao].pesquisar(procurado);
+		comparacoes += tabelaHash[posicao].getComparacoes();
+		termino = System.nanoTime();
+		return procurado.getValor();
+	}
+	
+	/**
+	 * Método responsável por remover, da tabela hash, o item
+	 * cuja chave corresponde à que foi passada como parâmetro para esse método. 
+	 * @param chave: chave do item que deve ser removido da tabela hash.
+	 * @return uma referência ao item removido.
+	 * O método lança uma exceção caso o item não tenha sido localizado na tabela hash.
+	 */
+	@Override
+	public V remover(K chave) {
+		
+		/// cálculo da posição da tabela hash em que o item deve estar armazenado.
+		int posicao = funcaoHash(chave);
+		
+		Entrada<K, V> procurado = new Entrada<>(chave, null);
+		
+		/// remove o item, cuja chave foi passada como parâmetro para esse método,
+		/// da lista encadeada associada à posição, da tabela hash, em que esse item deve estar armazenado.	
+		procurado = tabelaHash[posicao].remover(procurado);
+		return procurado.getValor();
+	}
+	
+	@Override
+	public String toString(){
+		return percorrer();
+	}
+	
+	/**
+	 * Método responsável por percorrer todo o conteúdo da tabela hash e retornar sua representação, em string.
+	 * A string inclui o índice da tabela hash e seu correspondente conteúdo.
+	 * Se a posição da tabela hash estiver vazia, é incluída uma mensagem explicativa.
+	 * Caso contrário, para todos os itens, armazenados na lista encadeada 
+	 * associada a uma posição da tabela hash, são incluídos seus dados, sempre usando
+	 * o polimorfismo do toString.
+	 */
+	@Override
+	public String percorrer() {
+		String conteudo = "Tabela com " + capacidade + " posições e " + tamanho() + " itens\n";
+		for (int i = 0; i < capacidade; i++) {
+			conteudo += "Posição[" + i + "]: ";
+			if (tabelaHash[i].vazia())
+				conteudo += "vazia\n";
+			else
+				conteudo += tabelaHash[i].toString() + "\n";
+		}
+		return conteudo;
+	}
+
+	/**
+	 * Percorre todas as posições da tabela hash, executando a ação informada
+	 * para a chave e o valor de cada item armazenado.
+	 * @param acao Ação a ser executada para cada par chave/valor armazenado na tabela.
+	 */
+	public void paraCada(BiConsumer<K, V> acao) {
+		for (int i = 0; i < capacidade; i++) {
+			tabelaHash[i].paraCada(entrada -> acao.accept(entrada.getChave(), entrada.getValor()));
 		}
 	}
 
 	/**
-	 * Método responsável por localizar, na tabela hash, o item
-	 * cuja chave corresponde à que foi passada como parâmetro para esse método.
-	 * O método lança uma exceção caso o item não seja localizado na tabela hash.
-	 * 
-	 * @param chave: chave do item que deve ser localizado na tabela hash.
-	 * @return uma referência ao item encontrado.
-	 * @throws NoSuchElementException se o elemento não existir (exceção da classe
-	 *                                Lista)
-	 */
-	@Override
-	public V pesquisar(K chave) {
-		LocalDateTime inicio = LocalDateTime.now();
-
-		comparacoes = 1;
-		/// cálculo da posição da tabela hash em que o item deve estar armazenado.
-		int posicao = funcaoHash(chave);
-
-		Entrada<K, V> procurado = new Entrada<>(chave, null);
-
-		/// pesquisa o item, cuja chave foi passada como parâmetro para esse método,
-		/// na lista encadeada associada à posição, da tabela hash, em que esse item
-		/// deve estar armazenado.
-		procurado = this.tabelaHash[posicao].pesquisar(procurado);
-		comparacoes += this.tabelaHash[posicao].getComparacoes();
-		LocalDateTime fim = LocalDateTime.now();
-		tempoExecucao = Duration.between(inicio, fim).toNanos();
-
-		return procurado.getValor();
-	}
-
-	/**
-	 * Método responsável por remover, da tabela hash, o item
-	 * cuja chave corresponde à que foi passada como parâmetro para esse método.
-	 * O método lança uma exceção caso o item não tenha sido localizado na tabela
-	 * hash.
-	 * 
-	 * @param chave: chave do item que deve ser removido da tabela hash.
-	 * @return uma referência ao item removido.
-	 * @throws NoSuchElementException se o elemento não existir (exceção da classe
-	 *                                Lista)
-	 */
-	@Override
-	public V remover(K chave) {
-		LocalDateTime inicio = LocalDateTime.now();
-
-		comparacoes = 1;
-		/// cálculo da posição da tabela hash em que o item deve estar armazenado.
-		int posicao = funcaoHash(chave);
-
-		Entrada<K, V> procurado = new Entrada<>(chave, null);
-
-		/// remove o item, cuja chave foi passada como parâmetro para esse método,
-		/// da lista encadeada associada à posição, da tabela hash, em que esse item
-		/// deve estar armazenado.
-		procurado = this.tabelaHash[posicao].remover(procurado);
-		comparacoes += this.tabelaHash[posicao].getComparacoes();
-		LocalDateTime fim = LocalDateTime.now();
-		tempoExecucao = Duration.between(inicio, fim).toNanos();
-
-		return procurado.getValor();
-	}
-
-	// #region Herança Object
-	@Override
-	public String toString() {
-		return percorrer();
-	}
-	// #endregion
-
-	// #region Interface IMapeamento
-	@Override
-
-	/**
-	 * Retorna o tamanho da tabela hash. O tamanho é a quantidade de itens
-	 * efetivamente
-	 * armazenados no momento, ou seja, pode ser um valor inclusive maior do que a
-	 * sua
+	 * Retorna o tamanho da tabela hash. O tamanho é a quantidade de itens efetivamente
+	 * armazenados no momento, ou seja, pode ser um valor inclusive maior do que a sua 
 	 * capacidade inicial, dado o tratamento de colisões por lista encadeada.
-	 * 
-	 * @return Inteiro, não negativo, com a quantidade de itens armazenados na
-	 *         tabela.
+	 * @return Inteiro, não negativo, com a quantidade de itens armazenados na tabela.
 	 */
+	
+	@Override
 	public int tamanho() {
 		int tamanho = 0;
-		for (Lista<Entrada<K, V>> lista : tabelaHash) {
-			tamanho += lista.tamanho();
+		for (int i = 0; i < capacidade; i++) {
+			tamanho += tabelaHash[i].tamanho();
 		}
 		return tamanho;
 	}
 
-	/**
-	 * Método responsável por percorrer todo o conteúdo da tabela hash e retornar
-	 * sua representação em string.
-	 * A string inclui o índice da tabela hash e seu correspondente conteúdo.
-	 * Se a posição da tabela hash estiver vazia, é incluída uma mensagem
-	 * explicativa.
-	 * Caso contrário, para todos os itens, armazenados na lista encadeada
-	 * associada a uma posição da tabela hash, são incluídos seus dados, sempre
-	 * usando
-	 * o polimorfismo do toString.
-	 */
-	@Override
-	@SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-	public String percorrer() {
-		StringBuilder conteudo = new StringBuilder("Tabela com " + capacidade + " posições e " + tamanho() + " itens");
-		for (int i = 0; i < this.capacidade; i++) {
-			conteudo.append("\nPosição[").append(i).append("]: ");
-			if (this.tabelaHash[i].vazia())
-				conteudo.append("vazia\n");
-			else
-				conteudo.append(tabelaHash[i] + "\n");
-		}
-		return conteudo.toString();
-	}
-
-	public boolean vazia() {
-		return tamanho() == 0;
-	}
-
-	public boolean contemValor(V valor){
-		LocalDateTime inicio = LocalDateTime.now();
-		comparacoes = 1;
-		for (int i = 0; i < capacidade; i++) {
-			Lista<Entrada<K, V>> lista = tabelaHash[i];
-			for (int j = 0; j < lista.tamanho(); j++){
-				Entrada<K, V> entrada = lista.obter(j);
-				if (entrada.getValor().equals(valor)){
-					comparacoes++;
-					LocalDateTime fim = LocalDateTime.now();
-					tempoExecucao = Duration.between(inicio, fim).toNanos();
-					return true;
-				}
-			}
-		}
-		
-		LocalDateTime fim = LocalDateTime.now();
-		tempoExecucao = Duration.between(inicio, fim).toNanos();
-		return false;
-	}
-
-	public Lista<K> obterTodasChaves() {
-		Lista<K> todasChaves = new Lista<>();
-		LocalDateTime inicio = LocalDateTime.now();
-
-		comparacoes = 1;
-
-		for (int i = 0; i < capacidade; i++) {
-			Lista<Entrada<K, V>> lista = tabelaHash[i];
-
-			for (int j = 0; j < lista.tamanho(); j++) {
-				Entrada<K, V> entrada = lista.obter(j);
-				comparacoes++;
-				todasChaves.inserirFinal(entrada.getChave());
-			}
-		}
-
-		LocalDateTime fim = LocalDateTime.now();
-		tempoExecucao = Duration.between(inicio, fim).toNanos();
-		return todasChaves;
-	}
-
-	public void substituir(K chave, V novoValor) {
-		int posicao = funcaoHash(chave);
-		
-		Entrada<K, V> procurado = new Entrada<>(chave, null);
-		
-		procurado = tabelaHash[posicao].pesquisar(procurado);
-		
-		procurado.setValor(novoValor);
-	}
-
-	public void limpar() {
-		for (int i = 0; i < this.capacidade; i++) {
-			this.tabelaHash[i] = new Lista<>();
-		}
-	}
-
-	public Lista<V> obterTodosValores() {
-		Lista<V> todosValores = new Lista<>();
-		LocalDateTime inicio = LocalDateTime.now();
-		comparacoes = 1;
-
-		for (int i = 0; i < capacidade; i++) {
-			Lista<Entrada<K, V>> lista = tabelaHash[i];
-			for (int j = 0; j < lista.tamanho(); j++) {
-				Entrada<K, V> entrada = lista.obter(j);
-				comparacoes++;
-				todosValores.inserirFinal(entrada.getValor());
-			}
-		}
-
-		LocalDateTime fim = LocalDateTime.now();
-		tempoExecucao = Duration.between(inicio, fim).toNanos();
-		return todosValores;
-	}
-
-	public double fatorCarga() {
-		return (double) tamanho() / capacidade;
-	}
-
-	public int quantidadeColisoes() {
-		int colisoes = 0;
-		for (int i = 0; i < capacidade; i++) {
-			if (tabelaHash[i].tamanho() > 1) {
-				colisoes += (tabelaHash[i].tamanho() - 1);
-			}
-		}
-		return colisoes;
-	}
-
-	// #region IMedicao
 	@Override
 	public long getComparacoes() {
 		return comparacoes;
@@ -321,10 +193,6 @@ public class TabelaHash<K, V> implements IMapeamento<K, V> {
 
 	@Override
 	public double getTempo() {
-		return tempoExecucao;
+		return (termino - inicio) / 1_000_000;
 	}
-	// #endregion
-
-	// #endregion
-
 }

@@ -80,7 +80,7 @@ public class TestePreAtividade {
         // crescente nas duas árvores.
         
         ABB<Integer, Integer> abbOrdenada = new ABB<>();
-        AVL<Integer, Integer> avlOrdenada = new AVL<>();
+        // AVL<Integer, Integer> avlOrdenada = new AVL<>();
         
         // Clona e ordena a lista original para inserir os mesmos dados
         int[] listaOrdenada = lista.clone();

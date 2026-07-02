@@ -13,15 +13,18 @@ public class Pedido {
 	/** Indica a quantidade total de produtos no pedido até o momento */
 	private int quantProdutos = 0;
 
+	private Cliente comprador;
+
 	/**
 	 * Construtor do pedido.
 	 * Deve criar o vetor de produtos do pedido e armazenar a data atual do sistema
 	 * como a data do pedido
 	 */
-	public Pedido() {
+	public Pedido(LocalDate now, int formaDePagamento, Cliente comprador) {
 		produtos = new Lista<>();
 		quantProdutos = 0;
 		dataPedido = LocalDate.now();
+		this.comprador = comprador;
 	}
 
 	/**
@@ -31,7 +34,7 @@ public class Pedido {
 	 * @param novo O produto a ser incluído no pedido
 	 * @return A quantidade de produtos no pedido após a inclusão
 	 */
-	public int incluirProduto(Produto novo) {
+	public int incluirProduto(Produto novo, int quant) {
 
 		if (novo == null)
 			throw new IllegalArgumentException("Não se pode guardar um produto vazio no pedido");
@@ -72,6 +75,7 @@ public class Pedido {
 		DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
 		stringPedido.append("Pedido na data ").append(formatoData.format(dataPedido)).append(" - ");
+		stringPedido.append("Comprador: ").append(comprador);
 		stringPedido.append("Valor a pagar: R$ " + String.format("%.2f\n", valorFinal()));
 
 		stringPedido.append(produtos.toString());
@@ -117,4 +121,5 @@ public class Pedido {
     public void setProdutos(Lista<Produto> produtos) {
         this.produtos = produtos;
     }
+
 }
